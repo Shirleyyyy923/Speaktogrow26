@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ms Shirley Daily English Games</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Made for Ms Shirley's Students</p>
+      <h1>Daily English Games</h1>
+      <p>180句生活英文 + 18个真实情境 + 每主题9种小游戏，再用总挑战快乐收尾。</p>
+      <div class="hero-actions">
+        <button class="primary-btn" data-jump="games">开始玩</button>
+        <button class="secondary-btn" data-jump="phrases">看万用句</button>
+        <a class="secondary-btn link-btn" href="spm.html">SPM Corner</a>
+      </div>
+    </div>
+    <img src="assets/ms-shirley-classroom.svg" alt="Ms Shirley Daily English Games classroom illustration">
+  </header>
+
+  <main>
+    <section class="stats-band" aria-label="课程内容统计">
+      <div><strong>180</strong><span>实用句子</span></div>
+      <div><strong>18</strong><span>生活主题</span></div>
+      <div><strong>9+1</strong><span>主题游戏 + 总挑战</span></div>
+      <div><strong>1</strong><span>专属 Ms Shirley</span></div>
+    </section>
+
+    <section class="section" id="phrases">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Sentence Bank</p>
+          <h2>180句常用日常英文</h2>
+        </div>
+        <input id="searchInput" type="search" placeholder="搜索：奶茶 / toilet / shampoo">
+      </div>
+      <div class="category-row" id="categoryRow"></div>
+      <div class="phrase-grid" id="phraseGrid"></div>
+    </section>
+
+    <section class="section games" id="games">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Game Zone</p>
+          <h2>有趣的课堂小游戏</h2>
+        </div>
+        <div class="score">Score <strong id="totalScore">0</strong></div>
+      </div>
+
+      <div class="theme-console">
+        <div>
+          <p class="eyebrow">Choose A Theme</p>
+          <h3>今天要练什么？</h3>
+          <p>选择一个主题，下方九种游戏会一起换题。</p>
+        </div>
+        <label>课堂主题
+          <select id="gameTheme"></select>
+        </label>
+        <div class="theme-status">
+          <span>正在训练</span>
+          <strong id="activeGameTheme">课室里</strong>
+          <small>10 sentences · 9 games</small>
+        </div>
+      </div>
+
+      <div class="game-grid">
+        <article class="game-card">
+          <p class="game-label">Game 1</p>
+          <h3>情境快选</h3>
+          <p class="prompt" id="scenePrompt"></p>
+          <div class="option-list" id="sceneOptions"></div>
+          <p class="feedback" id="sceneFeedback"></p>
+          <button class="secondary-btn" id="nextScene">下一题</button>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 2</p>
+          <h3>主题句子制造机</h3>
+          <p class="hint" id="builderMission">组合一个适合当前主题的实用句子。</p>
+          <div class="builder topic-builder">
+            <label id="builderLabelA">礼貌开头<select id="builderPartA"></select></label>
+            <label id="builderLabelB">要说的内容<select id="builderPartB"></select></label>
+          </div>
+          <p class="built" id="builtOrder"></p>
+          <div class="button-row">
+            <button class="primary-btn" id="speakOrder">听句子</button>
+            <button class="secondary-btn" id="randomBuild">随机组合</button>
+          </div>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 3</p>
+          <h3>句子拼拼乐</h3>
+          <p class="prompt" id="scrambleHint"></p>
+          <div class="word-bank" id="wordBank"></div>
+          <div class="answer-line" id="answerLine"></div>
+          <p class="feedback" id="scrambleFeedback"></p>
+          <div class="button-row">
+            <button class="secondary-btn" id="resetScramble">重来</button>
+            <button class="primary-btn" id="checkScramble">检查</button>
+          </div>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 4</p>
+          <h3>30秒快答</h3>
+          <p class="prompt" id="speedPrompt"></p>
+          <div class="timer"><span id="timerBar"></span></div>
+          <div class="option-list" id="speedOptions"></div>
+          <p class="feedback" id="speedFeedback"></p>
+          <button class="primary-btn" id="startSpeed">开始30秒</button>
+        </article>
+
+        <article class="game-card wide">
+          <p class="game-label">Game 5</p>
+          <h3>角色扮演转盘</h3>
+          <div class="roleplay">
+            <div>
+              <span>Role A</span>
+              <strong id="roleA">Customer</strong>
+            </div>
+            <div>
+              <span>Situation</span>
+              <strong id="roleSituation">Buy milk tea with less sugar.</strong>
+            </div>
+            <div>
+              <span>Useful line</span>
+              <strong id="roleLine">Can I have one milk tea with less sugar, please?</strong>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="secondary-btn" id="spinRole">换一个情境</button>
+            <button class="primary-btn" id="speakRole">听示范</button>
+          </div>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 6</p>
+          <h3>听力侦探</h3>
+          <p class="hint">先听英文，再选出正确的中文意思。</p>
+          <button class="listen-button" id="playListening" aria-label="播放英文句子">▶</button>
+          <div class="option-list" id="listeningOptions"></div>
+          <p class="feedback" id="listeningFeedback"></p>
+          <button class="secondary-btn" id="nextListening">换一句</button>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 7</p>
+          <h3>中翻英擂台</h3>
+          <p class="prompt" id="translationPrompt"></p>
+          <div class="option-list" id="translationOptions"></div>
+          <p class="feedback" id="translationFeedback"></p>
+          <button class="secondary-btn" id="nextTranslation">下一题</button>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 8</p>
+          <h3>记忆翻翻配对</h3>
+          <p class="hint">找出英文和中文的一对。连续配对会得分。</p>
+          <div class="memory-board" id="memoryBoard"></div>
+          <p class="feedback" id="memoryFeedback"></p>
+          <button class="secondary-btn" id="resetMemory">重新洗牌</button>
+        </article>
+
+        <article class="game-card">
+          <p class="game-label">Game 9</p>
+          <h3>开口救援站</h3>
+          <p class="hint">抽一个情境，用开头句完成回答。适合小组抢答。</p>
+          <div class="speaking-rescue">
+            <span id="rescueSituation"></span>
+            <strong id="rescueStarter"></strong>
+          </div>
+          <div class="rescue-timer" id="rescueTimer">20</div>
+          <p class="feedback" id="rescueFeedback">准备好后按开始，大声说完整句子。</p>
+          <div class="button-row">
+            <button class="secondary-btn" id="newRescue">换题</button>
+            <button class="primary-btn" id="startRescue">开始20秒</button>
+          </div>
+        </article>
+
+        <article class="game-card wide final-challenge">
+          <div class="final-head">
+            <div>
+              <p class="game-label">Final Challenge</p>
+              <h3>Ms Shirley 10题总结赛</h3>
+              <p class="hint">混合18个主题。答对8题就获得 Daily English Star！</p>
+            </div>
+            <div class="challenge-score"><strong id="finalScore">0</strong><span>/ 10</span></div>
+          </div>
+          <div class="challenge-track"><span id="finalProgress"></span></div>
+          <p class="prompt" id="finalPrompt">准备好了吗？按开始抽取跨主题题目。</p>
+          <div class="option-list final-options" id="finalOptions"></div>
+          <p class="feedback" id="finalFeedback"></p>
+          <button class="primary-btn" id="startFinal">开始总结赛</button>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

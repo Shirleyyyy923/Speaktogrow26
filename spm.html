@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPM Corner - Ms Shirley Daily English</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="spm-hero">
+    <nav class="mini-nav">
+      <a href="index.html">Daily English Games</a>
+      <strong>SPM Corner</strong>
+    </nav>
+    <div>
+      <p class="eyebrow">Trial SPM Speaking Practice</p>
+      <h1>SPM Corner</h1>
+      <p>预考题库 + 万用答案 + 示范作答 + 计时练习。学生卡住，也有句子可以继续说。</p>
+      <div class="hero-actions">
+        <button class="primary-btn" id="randomCard">随机抽题</button>
+        <button class="secondary-btn" id="showFramework">万用答案</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section student-home" aria-label="Student progress">
+      <div class="student-welcome">
+        <div><p class="eyebrow">My Speaking Journey</p><h2 id="studentGreeting">准备开始今天的口语练习吗？</h2><p>每完成 10 个训练，就可以向老师换一个小礼物 🎁</p></div>
+        <button class="secondary-btn" id="changeStudentName" type="button">填写姓名</button>
+      </div>
+      <div class="reward-card">
+        <div class="reward-icon" aria-hidden="true">🎁</div>
+        <div class="reward-copy"><span id="rewardLabel">0 / 10 trainings</span><strong id="rewardMessage">完成第一个训练，开始收集星星吧！</strong><div class="reward-track"><span id="rewardProgress"></span></div></div>
+        <div class="reward-count"><strong id="giftCount">0</strong><span>可换礼物</span></div>
+      </div>
+      <div class="student-feedback" id="studentFeedback"><strong>💛 老师最新评语</strong><p>完成练习后，老师的鼓励会显示在这里。</p></div>
+    </section>
+
+    <section class="section assignment-section" id="assignments">
+      <div class="section-head"><div><p class="eyebrow">My Practice</p><h2>我的口语练习</h2><p class="section-note">完成后，成绩会保存在这个浏览器，方便你看回自己的进步。</p></div></div>
+      <div class="assignment-grid" id="studentAssignments"></div>
+    </section>
+
+    <section class="section common-topics-section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">High-Frequency Training</p>
+          <h2>SPM 高频主题训练格</h2>
+          <p class="section-note">根据目前收录的预考题库归纳。每格包含常见问法、万用观点和随机练习。</p>
+        </div>
+      </div>
+      <div class="common-topic-grid" id="commonTopicGrid"></div>
+    </section>
+
+    <section class="section" id="answerKit">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Question Bank</p>
+          <h2>SPM 预考 Speaking 题库</h2>
+        </div>
+        <input id="spmSearch" type="search" placeholder="搜索：holiday / health / technology">
+      </div>
+      <div class="category-row" id="spmFilters"></div>
+      <div class="spm-grid" id="spmGrid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Speaking Builder</p>
+          <h2>Ms Shirley 万用答案包</h2>
+        </div>
+      </div>
+      <div class="framework-grid">
+        <article class="framework-card">
+          <span class="tag">Part 2</span>
+          <h3>个人表达 4 步</h3>
+          <p><strong>1.</strong> I would like to talk about ...</p>
+          <p><strong>2.</strong> The first point is ...</p>
+          <p><strong>3.</strong> For example, ...</p>
+          <p><strong>4.</strong> That is why ... is important to me.</p>
+        </article>
+        <article class="framework-card">
+          <span class="tag">Part 3</span>
+          <h3>讨论题 4 步</h3>
+          <p><strong>1.</strong> In my opinion, ...</p>
+          <p><strong>2.</strong> One reason is ...</p>
+          <p><strong>3.</strong> Besides, ...</p>
+          <p><strong>4.</strong> Therefore, I think ...</p>
+        </article>
+        <article class="framework-card">
+          <span class="tag">HOTS</span>
+          <h3>高思维题 4 步</h3>
+          <p><strong>1.</strong> I partly agree because ...</p>
+          <p><strong>2.</strong> This can affect ...</p>
+          <p><strong>3.</strong> However, we should also ...</p>
+          <p><strong>4.</strong> In conclusion, ...</p>
+        </article>
+      </div>
+      <div class="survival-strip">
+        <article><span>没听清楚</span><strong>Could you repeat the question, please?</strong></article>
+        <article><span>需要时间</span><strong>Let me think about it for a moment.</strong></article>
+        <article><span>不会那个字</span><strong>I am not sure of the exact word, but it is something that...</strong></article>
+        <article><span>补充观点</span><strong>Besides that, I would also like to add that...</strong></article>
+      </div>
+
+      <div class="answer-lab">
+        <div>
+          <p class="eyebrow">Answer Lab</p>
+          <h3>万用答案制造器</h3>
+          <p class="hint">选择题型，填入几个关键词，就能得到一段可以直接练习的答案。</p>
+          <div class="answer-fields">
+            <label>题型
+              <select id="builderType">
+                <option value="opinion">Part 3 意见题</option>
+                <option value="personal">Part 2 个人题</option>
+              </select>
+            </label>
+            <label>主题 / 人 / 事物<input id="builderTopic" value="a healthy lifestyle"></label>
+            <label>主要原因<input id="builderReason" value="it keeps us fit and active"></label>
+            <label>例子<input id="builderExample" value="students can exercise three times a week"></label>
+          </div>
+          <button class="primary-btn" id="buildAnswer">生成万用答案</button>
+        </div>
+        <div class="generated-answer">
+          <span class="tag">Your Answer</span>
+          <p id="builtAnswer"></p>
+          <button class="secondary-btn" id="speakBuiltAnswer">听示范</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="spm-dialog" id="spmDialog">
+    <form method="dialog">
+      <button class="close-btn" value="cancel" aria-label="Close">×</button>
+      <p class="eyebrow" id="dialogType">SPM Speaking</p>
+      <h2 id="dialogTitle">Question</h2>
+      <p id="dialogPrompt"></p>
+      <ul id="dialogBullets"></ul>
+      <div class="sample-answer">
+        <div class="sample-head">
+          <span class="tag">万用示范答案</span>
+          <button class="secondary-btn" id="toggleSample" type="button">显示答案</button>
+        </div>
+        <p id="dialogSample" hidden></p>
+      </div>
+      <section class="recording-coach" aria-labelledby="coachTitle">
+        <div class="coach-heading">
+          <div>
+            <p class="eyebrow">Speaking Coach</p>
+            <h3 id="coachTitle">录音 + CEFR 课堂估分</h3>
+          </div>
+          <div class="record-time"><span id="recordDot"></span><strong id="recordTime">00:00</strong></div>
+        </div>
+        <div class="student-fields" aria-label="Student details">
+          <label>学生姓名<input id="studentName" autocomplete="name" placeholder="例如：Amy Tan"></label>
+        </div>
+        <p class="coach-note">支持 iPhone Safari 与 Android Chrome。第一次使用时浏览器会询问麦克风权限；录音和成绩暂存于这台装置。</p>
+        <details class="mic-help"><summary>手机麦克风打不开？点这里</summary><p>iPhone：使用 Safari，并在网址列的「网站设置」允许麦克风。Android：使用 Chrome，点锁头图标允许麦克风。线上版本必须使用 HTTPS。</p></details>
+        <div class="button-row recording-actions">
+          <button class="record-btn" id="startRecording" type="button"><span>●</span> 开始录音</button>
+          <button class="secondary-btn" id="stopRecording" type="button" disabled><span>■</span> 停止</button>
+          <button class="secondary-btn" id="clearRecording" type="button">清除</button>
+        </div>
+        <div class="mic-meter" id="micMeter" aria-label="Microphone level"><span></span><span></span><span></span><span></span><span></span><small>麦克风音量</small></div>
+        <p class="record-status" id="recordStatus" role="status">准备录音。请先读题，再用完整句子回答。</p>
+        <audio id="recordedAudio" controls hidden></audio>
+        <label class="transcript-field" for="speechTranscript">
+          <span>自动文字稿 <small>可以手动修正识别错误</small></span>
+          <textarea id="speechTranscript" rows="6" placeholder="录音后会显示英文文字，也可以直接输入学生的答案来评分。"></textarea>
+        </label>
+        <button class="primary-btn score-response-btn" id="scoreResponse" type="button">取得 CEFR 课堂估分</button>
+        <div class="score-report" id="scoreReport" hidden>
+          <div class="overall-score">
+            <div><span>Estimated level</span><strong id="cefrLevel">B1</strong></div>
+            <div><span>Classroom score</span><strong><b id="cefrTotal">0</b>/25</strong></div>
+          </div>
+          <p class="can-do" id="cefrCanDo"></p>
+          <div class="cefr-score-grid" id="cefrScoreGrid"></div>
+          <div class="coach-feedback">
+            <h4>Ms Shirley Coach</h4>
+            <ul id="cefrFeedback"></ul>
+          </div>
+          <div class="encouragement-card"><span>💛 给你的鼓励</span><strong id="encouragementTitle"></strong><p id="encouragementText"></p></div>
+          <div class="speech-stats" id="speechStats"></div>
+          <p class="assessment-note">这是依据 CEFR spoken-language qualitative features 制作的课堂练习估分，不是正式 SPM 成绩。Interaction 与 pronunciation 仍建议由老师听录音确认。</p>
+          <button class="primary-btn submit-result-btn" id="submitResult" type="button">保存我的练习记录</button>
+          <p class="save-status" id="saveStatus" role="status"></p>
+        </div>
+      </section>
+      <div class="practice-clock"><strong id="practiceTime">01:00</strong><span>回答计时</span></div>
+      <div class="button-row">
+        <button class="primary-btn" id="speakQuestion" type="button">听题目</button>
+        <button class="secondary-btn" id="startPractice" type="button">开始计时</button>
+        <button class="secondary-btn" value="cancel">关闭</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="spm.js"></script>
+</body>
+</html>

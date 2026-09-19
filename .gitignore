@@ -1,0 +1,13 @@
+*.pdf
+.DS_Store
+node_modules/
+.vercel/
+*.log
+*.zip
+recordings/
+*.webm
+*.mp4
+*.m4a
+*.wav
+teacher.html
+teacher.js
