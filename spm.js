@@ -312,6 +312,8 @@ let finalTranscript = "";
 let recognitionConfidence = [];
 let longPauseCount = 0;
 let lastSpeechResultAt = 0;
+let recognitionRestartTimer = null;
+let recognitionBlocked = false;
 let discardNextAudio = false;
 let recordedBlob = null;
 let lastScoreResult = null;
@@ -457,6 +459,8 @@ function setRecordingButtons(isRecording) {
 }
 
 function stopSpeechRecognition() {
+  clearTimeout(recognitionRestartTimer);
+  recognitionRestartTimer = null;
   if (!speechRecognition) return;
   speechRecognition.onend = null;
   try { speechRecognition.stop(); } catch (error) { /* It may already be stopped. */ }
@@ -475,11 +479,17 @@ function setupSpeechRecognition() {
     document.querySelector("#recordStatus").textContent = "正在录音。这个浏览器不支持自动文字，请录完后手动输入或修正答案。";
     return;
   }
+  clearTimeout(recognitionRestartTimer);
+  recognitionRestartTimer = null;
   speechRecognition = new Recognition();
-  speechRecognition.lang = "en-MY";
+  speechRecognition.lang = /Android/i.test(navigator.userAgent) ? "en-US" : "en-MY";
   speechRecognition.continuous = true;
   speechRecognition.interimResults = true;
   speechRecognition.maxAlternatives = 1;
+  speechRecognition.onstart = () => {
+    recognitionBlocked = false;
+    document.querySelector("#recordStatus").textContent = "正在录音，也正在自动转英文文字。请用完整句子继续说。";
+  };
   speechRecognition.onresult = event => {
     let interimTranscript = "";
     const now = Date.now();
@@ -498,16 +508,28 @@ function setupSpeechRecognition() {
     document.querySelector("#speechTranscript").value = `${finalTranscript}${interimTranscript}`.trim();
   };
   speechRecognition.onerror = event => {
+    if (["audio-capture", "not-allowed", "service-not-allowed"].includes(event.error)) {
+      recognitionBlocked = true;
+      document.querySelector("#recordStatus").textContent = "录音继续中，但浏览器没有允许自动转文字。请检查 Chrome/Safari 麦克风权限。";
+      return;
+    }
     if (event.error !== "no-speech") {
-      document.querySelector("#recordStatus").textContent = "录音继续中，但自动文字暂时不可用；稍后可以手动输入答案。";
+      document.querySelector("#recordStatus").textContent = "录音继续中，自动文字正在重新连接。请继续说完整句子。";
     }
   };
   speechRecognition.onend = () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      document.querySelector("#recordStatus").textContent = "录音继续中。自动文字已暂停，录完后可以手动补充。";
+    if (mediaRecorder && mediaRecorder.state === "recording" && !recognitionBlocked) {
+      recognitionRestartTimer = setTimeout(() => setupSpeechRecognition(), 450);
     }
   };
-  try { speechRecognition.start(); } catch (error) { speechRecognition = null; }
+  try {
+    speechRecognition.start();
+  } catch (error) {
+    speechRecognition = null;
+    recognitionRestartTimer = setTimeout(() => {
+      if (mediaRecorder && mediaRecorder.state === "recording" && !recognitionBlocked) setupSpeechRecognition();
+    }, 700);
+  }
 }
 
 async function startRecording() {
@@ -523,6 +545,9 @@ async function startRecording() {
     recognitionConfidence = [];
     longPauseCount = 0;
     lastSpeechResultAt = 0;
+    recognitionBlocked = false;
+    clearTimeout(recognitionRestartTimer);
+    recognitionRestartTimer = null;
     recordedSeconds = 0;
     discardNextAudio = false;
     document.querySelector("#speechTranscript").value = "";
@@ -548,7 +573,10 @@ async function startRecording() {
       const audio = document.querySelector("#recordedAudio");
       audio.src = audioUrl;
       audio.hidden = false;
-      document.querySelector("#recordStatus").textContent = "录音完成。先回放，再检查文字稿，然后取得课堂估分。";
+      const transcript = document.querySelector("#speechTranscript").value.trim();
+      document.querySelector("#recordStatus").textContent = transcript
+        ? "录音完成。先回放，再检查文字稿，然后取得课堂估分。"
+        : "录音已保存，但这台手机没有成功自动转文字。请换 Chrome/Safari 再试，或先听录音把英文答案补进文字稿。";
     };
     mediaRecorder.start();
     setupSpeechRecognition();
@@ -598,6 +626,9 @@ function clearRecordingState() {
   lastScoreResult = null;
   finalTranscript = "";
   recognitionConfidence = [];
+  recognitionBlocked = false;
+  clearTimeout(recognitionRestartTimer);
+  recognitionRestartTimer = null;
   recordedSeconds = 0;
   longPauseCount = 0;
   recordStartedAt = 0;
