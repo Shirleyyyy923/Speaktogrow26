@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teacher Dashboard - Ms Shirley</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="spm-hero">
+    <nav class="mini-nav"><a href="index.html">Daily English Games</a><a href="spm.html">SPM Corner</a><strong>Teacher Dashboard</strong></nav>
+    <div><p class="eyebrow">Teacher View</p><h1>Speaking Results</h1><p>查看学生口语练习成绩、文字稿和本机录音。</p></div>
+  </header>
+  <section class="section teacher-login" id="teacherLogin">
+    <div><p class="eyebrow">Private Teacher Access</p><h2 id="loginTitle">设置老师密码</h2><p id="loginHelp">第一次使用，请设置一个只属于老师的本机密码。</p></div>
+    <label>老师密码<input class="teacher-filter" id="teacherPassword" type="password" autocomplete="current-password" minlength="4"></label>
+    <button class="primary-btn" id="teacherLoginButton" type="button">进入后台</button>
+    <p class="save-status" id="loginStatus" role="status"></p>
+  </section>
+  <main class="section teacher-shell" id="teacherApp" hidden>
+    <section class="teacher-summary" aria-label="Class summary">
+      <article><span>提交次数</span><strong id="submissionCount">0</strong></article>
+      <article><span>学生人数</span><strong id="studentCount">0</strong></article>
+      <article><span>平均分</span><strong id="averageScore">—</strong></article>
+      <article><span>最高分</span><strong id="highestScore">—</strong></article>
+    </section>
+    <section class="teacher-tools">
+      <input class="teacher-filter" id="resultSearch" type="search" placeholder="搜索学生或题目">
+      <button class="primary-btn" id="exportResults">导出 CSV</button>
+    </section>
+    <section class="teacher-panel">
+      <div class="section-head"><div><p class="eyebrow">Assignments</p><h2>发布口语练习</h2></div></div>
+      <div class="assignment-form">
+        <label>练习名称<input class="teacher-filter" id="assignmentTitle" placeholder="例如：Week 1 Speaking"></label>
+        <label>选择题目<select class="teacher-filter" id="assignmentQuestion"></select></label>
+        <label>截止日期<input class="teacher-filter" id="assignmentDue" type="date"></label>
+        <label>给学生的话<input class="teacher-filter" id="assignmentNote" placeholder="例如：勇敢说满 60 秒，你可以的！"></label>
+        <button class="primary-btn" id="publishAssignment" type="button">发布练习</button>
+      </div>
+      <div class="assignment-admin-list" id="assignmentAdminList"></div>
+    </section>
+    <section class="teacher-table-wrap">
+      <table class="teacher-table">
+        <thead><tr><th>学生</th><th>题目</th><th>分数</th><th>CEFR</th><th>流利度</th><th>日期</th><th></th></tr></thead>
+        <tbody id="resultRows"></tbody>
+      </table>
+    </section>
+    <section class="teacher-panel">
+      <div class="section-head"><div><p class="eyebrow">Rewards</p><h2>小礼物兑换 🎁</h2><p class="section-note">学生每完成 10 个训练，可兑换一个小礼物。</p></div></div>
+      <div class="reward-admin-list" id="rewardAdminList"></div>
+    </section>
+    <p class="assessment-note">第一版资料只保存在这台装置的这个浏览器。连接云端后，老师才能在另一部手机或电脑查看学生提交。</p>
+  </main>
+  <dialog class="result-detail" id="resultDetail"><button class="close-btn" id="closeDetail" aria-label="Close">×</button><div id="detailContent"></div></dialog>
+  <script src="teacher.js"></script>
+</body>
+</html>

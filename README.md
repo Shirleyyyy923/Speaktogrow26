@@ -8,8 +8,9 @@ Student-facing static website for daily English and SPM Speaking practice.
 
 - `index.html` - Daily English Games
 - `spm.html` - SPM Speaking Corner
+- `teacher.html` - private teacher dashboard
 
-The teacher dashboard files are kept out of the public deployment.
+The teacher dashboard is kept off the student navigation and should only be shared directly with Ms Shirley.
 
 ## Deploy
 
