@@ -315,6 +315,9 @@ let longPauseCount = 0;
 let lastSpeechResultAt = 0;
 let recognitionRestartTimer = null;
 let recognitionBlocked = false;
+let transcriptOnlyRecognition = null;
+let transcriptOnlyActive = false;
+let transcriptOnlyRestartTimer = null;
 let discardNextAudio = false;
 let recordedBlob = null;
 let lastScoreResult = null;
@@ -487,6 +490,109 @@ function releaseMicrophone() {
   micStream = null;
 }
 
+function setTranscriptOnlyButton(active) {
+  const button = document.querySelector("#transcriptOnly");
+  button.classList.toggle("active", active);
+  button.textContent = active ? "■ 停止转文字" : "Android 只转文字";
+}
+
+function stopTranscriptOnly(message = true) {
+  transcriptOnlyActive = false;
+  clearTimeout(transcriptOnlyRestartTimer);
+  transcriptOnlyRestartTimer = null;
+  setTranscriptOnlyButton(false);
+  if (transcriptOnlyRecognition) {
+    try { transcriptOnlyRecognition.stop(); } catch (error) { /* It may already be stopped. */ }
+  } else if (message) {
+    document.querySelector("#recordStatus").textContent = "转文字已停止。请检查文字稿，再取得课堂估分。";
+  }
+}
+
+function startTranscriptOnlySession() {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition || !transcriptOnlyActive) return;
+  let sessionFinal = "";
+  let sessionInterim = "";
+  let sessionCommitted = false;
+  const commitSession = () => {
+    if (sessionCommitted) return;
+    sessionCommitted = true;
+    const phrase = `${sessionFinal}${sessionInterim}`.trim();
+    if (phrase) finalTranscript += `${phrase} `;
+    interimTranscript = "";
+    updateTranscriptField();
+  };
+  transcriptOnlyRecognition = new Recognition();
+  transcriptOnlyRecognition.lang = "en-US";
+  transcriptOnlyRecognition.continuous = false;
+  transcriptOnlyRecognition.interimResults = true;
+  transcriptOnlyRecognition.maxAlternatives = 1;
+  transcriptOnlyRecognition.onstart = () => {
+    document.querySelector("#recordStatus").textContent = "Android 只转文字进行中。请重新说英文答案；完成后按『停止转文字』。";
+  };
+  transcriptOnlyRecognition.onresult = event => {
+    sessionFinal = "";
+    sessionInterim = "";
+    for (let index = 0; index < event.results.length; index += 1) {
+      const phrase = event.results[index][0].transcript.trim();
+      if (event.results[index].isFinal) {
+        sessionFinal += `${phrase} `;
+        const confidence = event.results[index][0].confidence;
+        if (Number.isFinite(confidence)) recognitionConfidence.push(confidence);
+      } else {
+        sessionInterim += `${phrase} `;
+      }
+    }
+    document.querySelector("#speechTranscript").value = `${finalTranscript}${sessionFinal}${sessionInterim}`.trim();
+  };
+  transcriptOnlyRecognition.onerror = event => {
+    if (["not-allowed", "service-not-allowed", "audio-capture"].includes(event.error)) {
+      transcriptOnlyActive = false;
+      setTranscriptOnlyButton(false);
+      document.querySelector("#recordStatus").textContent = "Android 没有允许语音识别。请在 Chrome 网站设置中允许麦克风，再按『Android 只转文字』。";
+    } else if (event.error === "network") {
+      document.querySelector("#recordStatus").textContent = "自动转文字需要网络连接。录音仍保留；请检查网络后再按『Android 只转文字』。";
+    }
+  };
+  transcriptOnlyRecognition.onend = () => {
+    commitSession();
+    transcriptOnlyRecognition = null;
+    if (transcriptOnlyActive) {
+      transcriptOnlyRestartTimer = setTimeout(startTranscriptOnlySession, 450);
+    } else {
+      document.querySelector("#recordStatus").textContent = document.querySelector("#speechTranscript").value.trim()
+        ? "转文字完成。请检查文字稿，再取得课堂估分。"
+        : "没有收到英文文字。请确认 Android Chrome 有网络及麦克风权限，再重试。";
+    }
+  };
+  try {
+    transcriptOnlyRecognition.start();
+  } catch (error) {
+    transcriptOnlyRecognition = null;
+    transcriptOnlyRestartTimer = setTimeout(startTranscriptOnlySession, 700);
+  }
+}
+
+function toggleTranscriptOnly() {
+  if (transcriptOnlyActive) {
+    stopTranscriptOnly();
+    return;
+  }
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    document.querySelector("#recordStatus").textContent = "这台浏览器不支持自动转文字，请使用最新版 Android Chrome，或手动输入英文答案。";
+    return;
+  }
+  if (mediaRecorder && mediaRecorder.state === "recording") stopRecording();
+  stopSpeechRecognition();
+  const existing = document.querySelector("#speechTranscript").value.trim();
+  finalTranscript = existing ? `${existing} ` : "";
+  interimTranscript = "";
+  transcriptOnlyActive = true;
+  setTranscriptOnlyButton(true);
+  startTranscriptOnlySession();
+}
+
 function setupSpeechRecognition() {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Recognition) {
@@ -561,6 +667,7 @@ async function startRecording() {
     return;
   }
   try {
+    stopTranscriptOnly(false);
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     startMicMeter(micStream);
     audioChunks = [];
@@ -600,7 +707,7 @@ async function startRecording() {
       const transcript = document.querySelector("#speechTranscript").value.trim();
       document.querySelector("#recordStatus").textContent = transcript
         ? "录音完成。先回放，再检查文字稿，然后取得课堂估分。"
-        : "录音已保存，但这台手机没有成功自动转文字。请换 Chrome/Safari 再试，或先听录音把英文答案补进文字稿。";
+        : "录音已保存，但 Android 没有同时转出文字。请按『Android 只转文字』并重新说一次；原录音仍会保留。";
     };
     mediaRecorder.start();
     setupSpeechRecognition();
@@ -641,6 +748,7 @@ function stopRecording(silent = false) {
 }
 
 function clearRecordingState() {
+  stopTranscriptOnly(false);
   discardNextAudio = true;
   stopRecording(true);
   if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -1008,6 +1116,7 @@ document.querySelector("#startPractice").addEventListener("click", startPractice
 document.querySelector("#startRecording").addEventListener("click", startRecording);
 document.querySelector("#stopRecording").addEventListener("click", () => stopRecording());
 document.querySelector("#clearRecording").addEventListener("click", clearRecordingState);
+document.querySelector("#transcriptOnly").addEventListener("click", toggleTranscriptOnly);
 document.querySelector("#scoreResponse").addEventListener("click", scoreSpeakingResponse);
 document.querySelector("#submitResult").addEventListener("click", submitSpeakingResult);
 document.querySelector("#buildAnswer").addEventListener("click", buildUniversalAnswer);
