@@ -55,7 +55,11 @@ module.exports = async function handler(request, response) {
     });
     const result = await transcriptionResponse.json().catch(() => ({}));
     if (!transcriptionResponse.ok) {
-      console.error("Transcription failed", transcriptionResponse.status, result?.error?.code || "unknown");
+      console.error(
+        "Transcription failed",
+        transcriptionResponse.status,
+        result?.error?.code || result?.error?.message || result?.message || "unknown"
+      );
       return response.status(502).json({ error: "The transcription service could not process this recording" });
     }
     const text = String(result.text || "").trim();
