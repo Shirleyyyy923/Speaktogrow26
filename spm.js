@@ -309,6 +309,7 @@ let recordTimer = null;
 let recordStartedAt = 0;
 let recordedSeconds = 0;
 let finalTranscript = "";
+let interimTranscript = "";
 let recognitionConfidence = [];
 let longPauseCount = 0;
 let lastSpeechResultAt = 0;
@@ -458,10 +459,23 @@ function setRecordingButtons(isRecording) {
   document.querySelector("#recordDot").classList.toggle("active", isRecording);
 }
 
+function updateTranscriptField() {
+  document.querySelector("#speechTranscript").value = `${finalTranscript}${interimTranscript}`.trim();
+}
+
+function keepInterimTranscript() {
+  const phrase = interimTranscript.trim();
+  if (!phrase) return;
+  finalTranscript += `${phrase} `;
+  interimTranscript = "";
+  updateTranscriptField();
+}
+
 function stopSpeechRecognition() {
   clearTimeout(recognitionRestartTimer);
   recognitionRestartTimer = null;
   if (!speechRecognition) return;
+  keepInterimTranscript();
   speechRecognition.onend = null;
   try { speechRecognition.stop(); } catch (error) { /* It may already be stopped. */ }
   speechRecognition = null;
@@ -482,8 +496,11 @@ function setupSpeechRecognition() {
   clearTimeout(recognitionRestartTimer);
   recognitionRestartTimer = null;
   speechRecognition = new Recognition();
-  speechRecognition.lang = /Android/i.test(navigator.userAgent) ? "en-US" : "en-MY";
-  speechRecognition.continuous = true;
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  speechRecognition.lang = isAndroid ? "en-US" : "en-MY";
+  // Android Chrome is more reliable with short recognition sessions. onend
+  // saves the current interim phrase and immediately starts the next session.
+  speechRecognition.continuous = !isAndroid;
   speechRecognition.interimResults = true;
   speechRecognition.maxAlternatives = 1;
   speechRecognition.onstart = () => {
@@ -491,7 +508,7 @@ function setupSpeechRecognition() {
     document.querySelector("#recordStatus").textContent = "正在录音，也正在自动转英文文字。请用完整句子继续说。";
   };
   speechRecognition.onresult = event => {
-    let interimTranscript = "";
+    let currentInterimTranscript = "";
     const now = Date.now();
     if (lastSpeechResultAt && now - lastSpeechResultAt > 2800) longPauseCount += 1;
     lastSpeechResultAt = now;
@@ -502,10 +519,11 @@ function setupSpeechRecognition() {
         finalTranscript += `${phrase} `;
         if (Number.isFinite(result[0].confidence)) recognitionConfidence.push(result[0].confidence);
       } else {
-        interimTranscript += `${phrase} `;
+        currentInterimTranscript += `${phrase} `;
       }
     }
-    document.querySelector("#speechTranscript").value = `${finalTranscript}${interimTranscript}`.trim();
+    interimTranscript = currentInterimTranscript;
+    updateTranscriptField();
   };
   speechRecognition.onerror = event => {
     if (["audio-capture", "not-allowed", "service-not-allowed"].includes(event.error)) {
@@ -513,11 +531,16 @@ function setupSpeechRecognition() {
       document.querySelector("#recordStatus").textContent = "录音继续中，但浏览器没有允许自动转文字。请检查 Chrome/Safari 麦克风权限。";
       return;
     }
+    if (event.error === "network") {
+      document.querySelector("#recordStatus").textContent = "录音继续中，但自动转文字需要网络连接。请检查网络后继续说，或录完后手动补上文字稿。";
+      return;
+    }
     if (event.error !== "no-speech") {
-      document.querySelector("#recordStatus").textContent = "录音继续中，自动文字正在重新连接。请继续说完整句子。";
+      document.querySelector("#recordStatus").textContent = `录音继续中，自动文字正在重新连接（${event.error || "识别中断"}）。请继续说完整句子。`;
     }
   };
   speechRecognition.onend = () => {
+    keepInterimTranscript();
     if (mediaRecorder && mediaRecorder.state === "recording" && !recognitionBlocked) {
       recognitionRestartTimer = setTimeout(() => setupSpeechRecognition(), 450);
     }
@@ -542,6 +565,7 @@ async function startRecording() {
     startMicMeter(micStream);
     audioChunks = [];
     finalTranscript = "";
+    interimTranscript = "";
     recognitionConfidence = [];
     longPauseCount = 0;
     lastSpeechResultAt = 0;
@@ -625,6 +649,7 @@ function clearRecordingState() {
   recordedBlob = null;
   lastScoreResult = null;
   finalTranscript = "";
+  interimTranscript = "";
   recognitionConfidence = [];
   recognitionBlocked = false;
   clearTimeout(recognitionRestartTimer);
