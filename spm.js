@@ -426,6 +426,51 @@ function preferredRecordingOptions() {
   return mimeType ? { mimeType } : undefined;
 }
 
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Unable to read recording"));
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function transcribeRecordingInCloud(blob) {
+  const status = document.querySelector("#recordStatus");
+  if (!blob || !blob.size) return false;
+  if (location.hostname.endsWith("github.io")) {
+    status.textContent = "录音已保存。自动转文字需要使用新的 Vercel 网页；这里仍可手动输入文字稿。";
+    return false;
+  }
+  if (blob.size > 3 * 1024 * 1024) {
+    status.textContent = "录音已保存，但档案太大，无法自动转文字。请缩短录音或手动输入文字稿。";
+    return false;
+  }
+  status.textContent = "录音已保存，正在云端转成英文文字…";
+  try {
+    const response = await fetch("/api/transcribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        audioBase64: await blobToBase64(blob),
+        mimeType: blob.type || "audio/webm"
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Transcription failed");
+    const text = String(result.text || "").trim();
+    if (!text) throw new Error("No speech was detected");
+    finalTranscript = text;
+    interimTranscript = "";
+    updateTranscriptField();
+    status.textContent = "云端转文字完成。请检查文字稿，再取得课堂估分。";
+    return true;
+  } catch (error) {
+    status.textContent = "录音已保存，但云端转文字暂时失败。请稍后重试，或手动输入英文文字稿。";
+    return false;
+  }
+}
+
 function saveAudioBlob(resultId, blob) {
   if (!blob || !("indexedDB" in window)) return Promise.resolve(false);
   return new Promise(resolve => {
@@ -690,7 +735,7 @@ async function startRecording() {
     mediaRecorder.ondataavailable = event => {
       if (event.data.size > 0) audioChunks.push(event.data);
     };
-    mediaRecorder.onstop = () => {
+    mediaRecorder.onstop = async () => {
       releaseMicrophone();
       if (discardNextAudio) {
         discardNextAudio = false;
@@ -705,9 +750,11 @@ async function startRecording() {
       audio.src = audioUrl;
       audio.hidden = false;
       const transcript = document.querySelector("#speechTranscript").value.trim();
-      document.querySelector("#recordStatus").textContent = transcript
-        ? "录音完成。先回放，再检查文字稿，然后取得课堂估分。"
-        : "录音已保存，但 Android 没有同时转出文字。请按『Android 只转文字』并重新说一次；原录音仍会保留。";
+      if (transcript) {
+        document.querySelector("#recordStatus").textContent = "录音完成。先回放，再检查文字稿，然后取得课堂估分。";
+      } else {
+        await transcribeRecordingInCloud(blob);
+      }
     };
     mediaRecorder.start();
     setupSpeechRecognition();
