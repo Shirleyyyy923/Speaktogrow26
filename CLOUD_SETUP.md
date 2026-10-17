@@ -16,6 +16,6 @@ Microphone recording requires HTTPS. GitHub Pages already provides HTTPS, which 
 
 ## Vercel cloud transcription
 
-Deploy this repository as a Vercel project with OIDC enabled. Vercel automatically provides `VERCEL_OIDC_TOKEN` to the production Function, so no provider API key is stored in GitHub or exposed to the browser.
+Deploy this repository as a Vercel project and add `CLOUDFLARE_ACCOUNT_ID` plus the secret `CLOUDFLARE_API_TOKEN` to its production environment. The token must have only Workers AI Read/Edit permissions and must never be stored in GitHub or exposed to the browser.
 
-The browser sends the completed recording to `/api/transcribe`. The Function accepts same-origin requests only, limits audio to 3 MB, and forwards it through Vercel AI Gateway to `openai/whisper-1`. GitHub Pages cannot run this server function; students must use the Vercel deployment URL for automatic cloud transcription. AI Gateway usage is billed or credited through the connected Vercel account.
+The browser sends the completed recording to `/api/transcribe`. The Function accepts same-origin requests only, limits audio to 3 MB, and forwards it to Cloudflare Workers AI using `@cf/openai/whisper-large-v3-turbo`. GitHub Pages cannot run this server function; students must use the Vercel deployment URL for automatic cloud transcription. On Cloudflare's Free plan, requests stop after the daily free allocation is exhausted instead of continuing as paid overage.

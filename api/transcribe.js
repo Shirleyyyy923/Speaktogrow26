@@ -16,14 +16,13 @@ module.exports = async function handler(request, response) {
     return response.status(403).json({ error: "Origin not allowed" });
   }
 
-  // At runtime Vercel provides the short-lived OIDC token on the request.
-  // The environment variable is mainly available during builds/local dev.
-  const oidcToken = request.headers["x-vercel-oidc-token"] || process.env.VERCEL_OIDC_TOKEN;
-  if (!oidcToken) {
+  const cloudflareAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const cloudflareApiToken = process.env.CLOUDFLARE_API_TOKEN;
+  if (!cloudflareAccountId || !cloudflareApiToken) {
     return response.status(503).json({ error: "Cloud transcription is not configured" });
   }
 
-  const { audioBase64, mimeType = "audio/webm" } = request.body || {};
+  const { audioBase64 } = request.body || {};
   if (typeof audioBase64 !== "string" || !audioBase64) {
     return response.status(400).json({ error: "Audio is required" });
   }
@@ -39,18 +38,19 @@ module.exports = async function handler(request, response) {
   }
 
   try {
-    const transcriptionResponse = await fetch("https://ai-gateway.vercel.sh/v4/ai/transcription-model", {
+    const transcriptionResponse = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(cloudflareAccountId)}/ai/run/@cf/openai/whisper-large-v3-turbo`,
+      {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${oidcToken}`,
-        "Content-Type": "application/json",
-        "ai-gateway-protocol-version": "0.0.1",
-        "ai-transcription-model-specification-version": "4",
-        "ai-model-id": "openai/whisper-1"
+        Authorization: `Bearer ${cloudflareApiToken}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         audio: audioBuffer.toString("base64"),
-        mediaType: mimeType
+        task: "transcribe",
+        language: "en",
+        vad_filter: true
       })
     });
     const result = await transcriptionResponse.json().catch(() => ({}));
@@ -58,11 +58,11 @@ module.exports = async function handler(request, response) {
       console.error(
         "Transcription failed",
         transcriptionResponse.status,
-        result?.error?.code || result?.error?.message || result?.message || "unknown"
+        result?.errors?.[0]?.code || result?.errors?.[0]?.message || result?.error || "unknown"
       );
       return response.status(502).json({ error: "The transcription service could not process this recording" });
     }
-    const text = String(result.text || "").trim();
+    const text = String(result?.result?.text || result?.text || "").trim();
     if (!text) return response.status(422).json({ error: "No speech was detected" });
     return response.status(200).json({ text });
   } catch (error) {
