@@ -9,3 +9,5 @@ recordings/
 *.mp4
 *.m4a
 *.wav
+.vercel
+.env*

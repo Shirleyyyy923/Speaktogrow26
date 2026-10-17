@@ -16,9 +16,6 @@ Microphone recording requires HTTPS. GitHub Pages already provides HTTPS, which 
 
 ## Vercel cloud transcription
 
-Deploy this repository as a Vercel project and add these environment variables in the Vercel project settings:
+Deploy this repository as a Vercel project with OIDC enabled. Vercel automatically provides `VERCEL_OIDC_TOKEN` to the production Function, so no provider API key is stored in GitHub or exposed to the browser.
 
-- `OPENAI_API_KEY`: a server-side OpenAI API key with access to audio transcription. Never expose this value in browser JavaScript or commit it to GitHub.
-- `ALLOWED_ORIGIN`: the production Vercel website origin, for example `https://your-project.vercel.app`.
-
-The browser sends the completed recording to `/api/transcribe`. The Vercel function limits audio to 3 MB and forwards it to `gpt-4o-mini-transcribe` with English selected. GitHub Pages cannot run this server function; students must use the Vercel deployment URL for automatic cloud transcription.
+The browser sends the completed recording to `/api/transcribe`. The Function accepts same-origin requests only, limits audio to 3 MB, and forwards it through Vercel AI Gateway to `openai/whisper-1`. GitHub Pages cannot run this server function; students must use the Vercel deployment URL for automatic cloud transcription. AI Gateway usage is billed or credited through the connected Vercel account.
