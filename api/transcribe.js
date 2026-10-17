@@ -16,7 +16,10 @@ module.exports = async function handler(request, response) {
     return response.status(403).json({ error: "Origin not allowed" });
   }
 
-  if (!process.env.VERCEL_OIDC_TOKEN) {
+  // At runtime Vercel provides the short-lived OIDC token on the request.
+  // The environment variable is mainly available during builds/local dev.
+  const oidcToken = request.headers["x-vercel-oidc-token"] || process.env.VERCEL_OIDC_TOKEN;
+  if (!oidcToken) {
     return response.status(503).json({ error: "Cloud transcription is not configured" });
   }
 
@@ -39,7 +42,7 @@ module.exports = async function handler(request, response) {
     const transcriptionResponse = await fetch("https://ai-gateway.vercel.sh/v4/ai/transcription-model", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.VERCEL_OIDC_TOKEN}`,
+        Authorization: `Bearer ${oidcToken}`,
         "Content-Type": "application/json",
         "ai-gateway-protocol-version": "0.0.1",
         "ai-transcription-model-specification-version": "4",
