@@ -22,7 +22,7 @@ module.exports = async function handler(request, response) {
     return response.status(503).json({ error: "Cloud transcription is not configured" });
   }
 
-  const { audioBase64 } = request.body || {};
+  const { audioBase64, mimeType = "audio/webm" } = request.body || {};
   if (typeof audioBase64 !== "string" || !audioBase64) {
     return response.status(400).json({ error: "Audio is required" });
   }
@@ -50,7 +50,9 @@ module.exports = async function handler(request, response) {
         audio: audioBuffer.toString("base64"),
         task: "transcribe",
         language: "en",
-        vad_filter: true
+        // Android microphones can be quiet. Cloudflare's VAD may otherwise
+        // remove the whole answer as silence before Whisper sees it.
+        vad_filter: false
       })
     });
     const result = await transcriptionResponse.json().catch(() => ({}));
@@ -63,7 +65,11 @@ module.exports = async function handler(request, response) {
       return response.status(502).json({ error: "The transcription service could not process this recording" });
     }
     const text = String(result?.result?.text || result?.text || "").trim();
-    if (!text) return response.status(422).json({ error: "No speech was detected" });
+    if (!text) {
+      console.warn("No speech detected", { bytes: audioBuffer.length, mimeType: String(mimeType).slice(0, 80) });
+      return response.status(422).json({ error: "No clear English speech was detected" });
+    }
+    console.info("Transcription completed", { bytes: audioBuffer.length, mimeType: String(mimeType).slice(0, 80), characters: text.length });
     return response.status(200).json({ text });
   } catch (error) {
     console.error("Transcription request failed", error?.message || "unknown");
