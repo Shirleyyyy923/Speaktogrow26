@@ -457,7 +457,12 @@ async function transcribeRecordingInCloud(blob) {
       })
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "Transcription failed");
+    if (!response.ok) {
+      const message = response.status === 422
+        ? "录音已保存，但没有检测到清楚的英文声音。请靠近麦克风，再录一次。"
+        : `录音已保存，但云端转文字失败（${response.status}）。请检查网络后重试。`;
+      throw new Error(message);
+    }
     const text = String(result.text || "").trim();
     if (!text) throw new Error("No speech was detected");
     finalTranscript = text;
@@ -466,7 +471,9 @@ async function transcribeRecordingInCloud(blob) {
     status.textContent = "云端转文字完成。请检查文字稿，再取得课堂估分。";
     return true;
   } catch (error) {
-    status.textContent = "录音已保存，但云端转文字暂时失败。请稍后重试，或手动输入英文文字稿。";
+    status.textContent = error?.message?.startsWith("录音已保存")
+      ? error.message
+      : "录音已保存，但无法连接云端转文字。请检查网络后重试，或手动输入英文文字稿。";
     return false;
   }
 }
